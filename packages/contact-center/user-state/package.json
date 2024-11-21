@@ -48,5 +48,5 @@
     "testEnvironment": "jsdom",
     "passWithNoTests": true
   },
-  "stableVersion": "1.0.0"
+  "stableVersion": "1.27.6-eft.1"
 }
