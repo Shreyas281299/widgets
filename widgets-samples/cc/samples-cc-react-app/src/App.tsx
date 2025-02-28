@@ -7,7 +7,7 @@ function App() {
   const [isSdkReady, setIsSdkReady] = useState(false);
   const [selectedWidgets, setSelectedWidgets] = useState({
     stationLogin: false,
-    userState: false,
+    userState: true,
     incomingTask: false,
     taskList: false,
     callControl: false,
