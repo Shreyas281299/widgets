@@ -72,12 +72,3 @@ jobs:
         run: yarn run test:tooling
       - name: Test CC Widgets
         run: yarn run test:cc-widgets
-
-  release_widgets:
-    runs-on: ubuntu-latest
-    needs: [build, unit_tests]
-    if: github.ref == 'refs/heads/ccwidgets'
-    steps:
-      - uses: actions/checkout@v2
-      - name: Release Widgets
-        run: yarn run release:widgets
