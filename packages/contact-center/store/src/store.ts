@@ -39,7 +39,7 @@ class Store implements IStore {
   lastStateChangeTimestamp?: number;
   lastIdleCodeChangeTimestamp?: number;
   showMultipleLoginAlert: boolean = false;
-  new: boolean = true;
+  news: boolean = true;
   callControlAudio: MediaStream | null = null;
   consultOfferReceived: boolean = false;
 
