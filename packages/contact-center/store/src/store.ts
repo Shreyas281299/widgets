@@ -104,7 +104,7 @@ class Store implements IStore {
       .catch((error) => {
         this.logger.error(`Error registering contact center: ${error}`, {
           module: 'cc-store#store.ts',
-          method: 'registerCC',
+          method: 'registerCCs',
         });
         return Promise.reject(error);
       });
