@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Station Login widget provides a user interface for contact center agents to log in and out of their station. It handles device type selection (Extension, Mobile, Browser), team selection, and agent profile management. The widget integrates with the Webex Contact Center SDK and follows the standard three-layer architecture pattern (Widget → Hook → Component → Store).
+The Station Login widget provides a user interface for contact center agents to log in and out of their station. It handles device type selection (Extension, DN Number, Browser), team selection, and agent profile management. The widget integrates with the Webex Contact Center SDK and follows the standard three-layer architecture pattern (Widget → Hook → Component → Store).
 
 **Package:** `@webex/cc-station-login`
 

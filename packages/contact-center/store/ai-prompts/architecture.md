@@ -2,7 +2,7 @@
 
 ## Component Overview
 
-The store layer follows the architecture: **Widget → Hook → Component → Store → SDK**. This document details the Store’s structure, its wrapper, SDK integrations, data flows, and sequences for common scenarios.
+The Store is a singleton state management object built with MobX, responsible for observing state changes and emitting updates to all Contact Center widgets. It must be initialized before any widgets can be used. This document explains the Store’s structure, initialization requirements, wrapper, integration with the SDK, core data flows, and typical usage scenarios.
 
 ### Components Table
 
@@ -59,29 +59,28 @@ store/
 
 ```mermaid
 graph TB
-    subgraph "Consumers"
-        Widget[Widget]
-        Hook[Custom Hook]
-        UI[Component]
-    end
+    %% Consumers
+    Widget["Widget"]
+    Hook["Custom Hook"]
+    UI["UI Component"]
 
-    subgraph "State"
-        Wrapper[StoreWrapper<br/>storeEventsWrapper.ts]
-        Store[Store<br/>store.ts]
-    end
+    %% State
+    Wrapper["StoreWrapper (storeEventsWrapper.ts)"]
+    Store["Store (store.ts)"]
 
-    subgraph "SDK"
-        SDK[@webex/contact-center]
-    end
+    %% SDK
+    SDK["Webex Contact Center SDK"]
 
+    %% Edges
     Widget --> Hook
-    Hook -->|reads/writes| Wrapper
-    Wrapper -->|proxies| Store
-    Wrapper -->|invokes| SDK
-    SDK -->|events| Wrapper
-    Wrapper -->|runInAction updates| Store
-    Store -->|observable reactions| Hook
-    Hook --> UI
+    Widget --> UI
+    Hook -- "states read/write/update" --> Wrapper
+    Wrapper -- "proxies" --> Store
+    Wrapper -- "invokes" --> SDK
+    SDK -- "events" --> Wrapper
+    Wrapper -- "mobx runInAction updates" --> Store
+    Store -- "cc.register" --> SDK
+
 ```
 
 ---
@@ -100,18 +99,17 @@ sequenceDiagram
   App->>Wrapper: init(params)
   Wrapper->>Store: init(params, setupIncomingTaskHandler)
   alt params.webex provided
-    Store->>Store: setupEventListeners(webex.cc)
-    Store->>Store: registerCC(webex)
+    Store->>SDK: registerCC(webex)
   else params.webexConfig + access_token
     Store->>SDK: Webex.init()
     SDK-->>Store: ready
-    Store->>Store: setupEventListeners(webex.cc)
-    Store->>Store: registerCC(webex)
+    Store->>SDK: registerCC(webex)
   end
-  Store->>SDK: register()
-  SDK-->>Store: Profile
-  Store->>Store: populate observables, feature flags
-  Store-->>Wrapper: initialized
+  SDK-->>Store: Agent profile
+  Store->>Store: populate observable states
+  Store->>Wrapper: cc object
+  Wrapper->>Store: Proxy all observable states
+  Wrapper->>Wrapper: setupEventListeners(webex.cc)
   Wrapper-->>App: resolved
 ```
 
@@ -119,25 +117,28 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant SDK
-  participant Wrapper
+  participant App
+  participant StoreWrapper as Wrapper
   participant Store
+  participant SDK
 
-  SDK-->>Wrapper: task:incoming (ITask)
-  Wrapper->>Wrapper: registerTaskEventListeners(task)
-  Wrapper->>Wrapper: onIncomingTask?()  (if new)
-  Wrapper->>Wrapper: handleTaskMuteState(task)
-  Wrapper->>Wrapper: refreshTaskList()
-  Wrapper->>Store: setCurrentTask(task?) (when applicable)
+  App->>StoreWrapper: onIncomingTask(callback)
+  SDK-->>StoreWrapper: "task:incoming" event
+  StoreWrapper->>StoreWrapper: invoke registered incoming task callback ({ task })
+  StoreWrapper->>App: invoke onIncomingTask({ task })
+  App->>App: Add task to app's slocal state (e.g., setIncomingTasks)
+  App->>App: Render IncomingTask for each incoming task in state
+
+  note over App: To dismiss, App removes task from local state when accepted or rejected
 ```
 
 ### 3) Agent State Change
 
 ```mermaid
 sequenceDiagram
-  participant SDK
   participant Wrapper
   participant Store
+  participant SDK
 
   SDK-->>Wrapper: agent:stateChange
   Wrapper->>Wrapper: handleStateChange()
@@ -150,9 +151,9 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant SDK
   participant Wrapper
   participant Store
+  participant SDK
 
   SDK-->>Wrapper: agent:multiLogin
   Wrapper->>Store: setShowMultipleLoginAlert(true)
@@ -162,9 +163,9 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant SDK
   participant Wrapper
   participant Store
+  participant SDK
 
   SDK-->>Wrapper: agent:logoutSuccess
   Wrapper->>Wrapper: cleanUpStore()

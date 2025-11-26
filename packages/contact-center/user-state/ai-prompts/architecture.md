@@ -59,38 +59,37 @@ The widget follows a unidirectional data flow pattern across layers with Web Wor
 
 ```mermaid
 graph TB
+    App
+    subgraph UserStateWidget
+    Widget
     subgraph "Presentation Layer"
-        Widget[UserState Widget]
         Component[UserStateComponent]
     end
-    
     subgraph "Business Logic Layer"
-        Hook[useUserState Hook<br/>helper.ts]
+        Hook[useUserState Hook]
     end
-    
-    subgraph "Background Processing"
-        Worker[Web Worker<br/>Timer]
-    end
-    
     subgraph "State Management Layer"
-        Store[Store Singleton]
+        Store[Store]
     end
-    
-    subgraph "SDK Layer"
+    end
         SDK[Contact Center SDK]
+
+    subgraph "Browser Processing"
+        Worker[Web Worker Thread]
     end
-    
-    Widget -->|Props<br/>callbacks| Hook
-    Hook -->|Read state<br/>idleCodes, currentState, etc| Store
+
+
+    App -->|props|Widget
+
+    Widget --->|props| Hook
+    Widget -->|props| Component
+
+    Hook -->| states & actions| Component
+    Hook <-->|State management| Store
     Hook -->|Call methods<br/>setAgentState| SDK
-    Store -->|Register callbacks<br/>Manage SDK instance| SDK
-    Hook <-->|Start/Stop/Reset timer| Worker
+    Hook <-->|timer updates| Worker
     
-    Worker -->|Timer updates<br/>every second| Hook
     SDK -->|Events<br/>state changes| Store
-    Store -->|State changes<br/>observable| Hook
-    Hook -->|Return state<br/>& handlers & timer| Widget
-    Widget -->|Props<br/>state, handlers, timer| Component
     
     style Hook fill:#e1f5ff
     style Worker fill:#ffe1e1
@@ -100,7 +99,6 @@ graph TB
 
 **Hook Responsibilities:**
 - Manages timer via Web Worker
-- Subscribes to state changes
 - Handles state update logic
 - Dual timer management
 - Error handling
@@ -112,6 +110,7 @@ graph TB
 - Idle code duration timer
 
 **Store Responsibilities:**
+- Subscribes to state changes
 - Observable state
 - Idle codes list
 - Current state tracking
@@ -162,14 +161,14 @@ The `useUserState` hook is the core business logic layer that:
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Widget as UserState Widget
-    participant Hook as useUserState Hook
-    participant Worker as Web Worker
     participant Component as UserStateComponent
+    participant Hook as useUserState Hook
     participant Store
+    participant Worker as Web Worker
 
-    User->>Widget: Load widget
+    App->>Widget: renders widget
     activate Widget
     Widget->>Hook: useUserState()
     activate Hook
@@ -180,14 +179,13 @@ sequenceDiagram
     Hook->>Worker: postMessage({type: 'start', startTime})
     Hook->>Worker: postMessage({type: 'startIdleCode', startTime})
     Worker-->>Hook: Worker ready
-    Hook-->>Widget: {state, handlers, timers}
+    Hook-->>Component: {state, handlers, timers}
     deactivate Hook
-    Widget->>Component: Render with state
     activate Component
     Component->>Component: Display current state
     Component->>Component: Display idle codes
     Component->>Component: Display timer: 00:00
-    Component-->>Widget: UI rendered
+    Component-->>App: UI rendered
     deactivate Component
     deactivate Widget
 
@@ -209,35 +207,27 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as UserStateComponent
     participant Hook as useUserState Hook
     participant Store
     participant SDK
     participant Worker as Web Worker
 
-    User->>Component: Select new state (e.g., "Break")
+    App->>Component: Select new state (e.g., "Break")
     activate Component
     Component->>Hook: setAgentStatus(selectedCode)
     activate Hook
-    Hook->>Store: setCurrentState(selectedCode)
-    activate Store
-    Store->>Store: currentState = selectedCode (observable)
-    Store-->>Hook: State updated
-    deactivate Store
-    Hook-->>Component: State change initiated
     deactivate Hook
     deactivate Component
 
-    Note over Hook,SDK: useEffect Triggered by currentState Change
-    Hook->>Hook: Detect currentState change
     activate Hook
-    Hook->>Hook: updateAgentState(selectedCode)
-    Hook->>Hook: setIsSettingAgentStatus(true)
-    Hook->>SDK: setAgentState({state: 'Idle', auxCodeId, agentId})
+    Hook->>SDK: cc.setAgentState({state: 'Idle', auxCodeId, agentId})
     activate SDK
     SDK->>SDK: Update agent state in backend
-    SDK-->>Hook: Success response with timestamps
+    SDK-->>Store: agent:stateChange
+    Store-->>Store: update states
+    Store-->>Hook: Observed states changed
     deactivate SDK
     Hook->>Store: setLastStateChangeTimestamp(timestamp)
     activate Store
@@ -271,16 +261,16 @@ sequenceDiagram
 
 ---
 
-#### 3. Custom State Change Flow
+#### 3. Custom State Change Flow (TODO)
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as UserStateComponent
     participant Hook as useUserState Hook
     participant Store
 
-    User->>Component: External state change
+    App->>Component: External state change
     activate Component
     Component->>Component: (State managed externally)
     deactivate Component
@@ -316,13 +306,15 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Widget as UserState Widget
+    participant Component as UserState Component
     participant Hook as useUserState Hook
     participant Worker as Web Worker
 
-    User->>Widget: Unmount widget
+    App->>Widget: Unmount widget
     activate Widget
+    Widget->>Component: Unmount
     Widget->>Hook: Cleanup (useEffect return)
     activate Hook
     Hook->>Worker: postMessage({type: 'stop'})
@@ -343,7 +335,7 @@ sequenceDiagram
     Hook->>Hook: workerRef.current = null
     Hook-->>Widget: Cleanup complete
     deactivate Hook
-    Widget-->>User: Widget unmounted
+    Widget-->>App: Widget unmounted
     deactivate Widget
 ```
 

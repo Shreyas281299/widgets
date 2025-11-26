@@ -58,8 +58,8 @@ The widget follows a unidirectional data flow pattern across layers:
 
 ```mermaid
 graph TB
+  subgraph "Station Login Widget"
     subgraph "Presentation Layer"
-        Widget[StationLogin Widget]
         Component[StationLoginComponent]
     end
     
@@ -68,22 +68,21 @@ graph TB
     end
     
     subgraph "State Management Layer"
-        Store[Store Singleton]
+        Store[Store ]
     end
-    
+  end
     subgraph "SDK Layer"
         SDK[Contact Center SDK]
     end
-    
-    Widget -->|Props<br/>callbacks, config| Hook
-    Hook -->|Read state<br/>teams, deviceType, etc| Store
-    Hook -->|Call methods<br/>stationLogin, logout, etc| SDK
-    Store -->|Register callbacks<br/>Manage SDK instance| SDK
-    
+
+    Hook -->|methods and states| Component
+    App -->|props| StationLogin
     SDK -->|Events<br/>login success, logout| Store
-    Store -->|State changes<br/>observable| Hook
-    Hook -->|Return state<br/>& handlers| Widget
-    Widget -->|Props<br/>state, handlers, teams| Component
+    StationLogin -->|Props<br/>callbacks, config| Hook
+    Hook -->|Call methods<br/>stationLogin, etc| Store
+    
+    Store <--> |State management| Hook
+    StationLogin -->|Props<br/>state, handlers, teams| Component
     
     style Hook fill:#e1f5ff
     style Store fill:#fff4e1
@@ -144,65 +143,67 @@ The `useStationLogin` hook is the core business logic layer that:
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant Widget as StationLogin Widget
-    participant Hook as useStationLogin Hook
+    participant App
+    %% participant Widget as StationLoginWidget (observer)
     participant Component as StationLoginComponent
+    participant Hook as useStationLogin Hook
     participant Store
     participant SDK
 
-    User->>Widget: Load widget
-    activate Widget
-    Widget->>Hook: useStationLogin()
-    activate Hook
-    Hook->>Store: getInstance()
-    Store-->>Hook: {configuration, teams, deviceTypes}
-    Hook-->>Widget: {state, handlers}
-    deactivate Hook
-    Widget->>Component: Render with state
-    activate Component
-    Component->>Component: Display teams dropdown
-    Component->>Component: Display device types
-    Component-->>Widget: UI rendered
-    deactivate Component
-    deactivate Widget
+    %% App->>Widget: Renders <StationLoginWidget/>
+    %% activate Widget
+    %% Widget->>Hook: useStationLogin() (observer subscribes to Store)
+    %% Hook->>Store: observes state (MobX reactivity)
+    %% Store-->>Hook: emits state updates (auto)
+    %% Hook-->>Widget: returns {state, handlers}
+    %% Widget->>Component: Passes props/state
+    %% activate Component
+    %% Component->>Component: Render UI (teams, device types, etc.)
+    %% Component-->>Widget: UI rendered
+    %% deactivate Component
+    %% deactivate Widget
 
-    Note over User,Component: User Selects Team
-    User->>Component: Select team from dropdown
-    activate Component
-    Component->>Hook: onTeamChange(teamId)
-    activate Hook
-    Hook->>Store: runInAction(() => setSelectedTeam(teamId))
-    Store-->>Hook: Updated state
-    Hook-->>Component: New state
-    deactivate Hook
-    Component->>Component: Update UI
-    deactivate Component
+    %% Note over Hook,Store: Observer pattern ensures reactivity
+    %% DO we need this? This is how MobX works
 
-    Note over User,Component: User Selects Device Type
-    User->>Component: Select device type (Extension/Mobile)
+    Note over App,Component: App Selects Device Type
+    App->>Component: Select device type (Extension/Mobile)
     activate Component
     Component->>Hook: onDeviceTypeChange(type)
     activate Hook
-    Hook->>Store: runInAction(() => setDeviceType(type))
+    Hook->>Store: setDeviceType(type)
     Store-->>Hook: Updated state
     Hook-->>Component: New state
     deactivate Hook
     Component->>Component: Show appropriate fields
     deactivate Component
 
-    Note over User,SDK: User Submits Login
-    User->>Component: Click Login button
+    Note over App,Component: App Selects Team
+    App->>Component: Select team from dropdown
+    activate Component
+    Component->>Hook: onTeamChange(teamId)
+    activate Hook
+    Hook->>Store: setSelectedTeam(teamId)
+    Store-->>Hook: Updated state
+    Hook-->>Component: New state
+    deactivate Hook
+    Component->>Component: Update UI
+    deactivate Component
+
+    Note over App,SDK: App Submits Login
+    App->>Component: Click Login button
     activate Component
     Component->>Hook: onLoginClick(credentials)
     activate Hook
-    Hook->>Store: runInAction(() => login(credentials))
+    Hook->>SDK:   cc.stationLogin({teamId, loginOption, dialNumber})
     activate Store
-    Store->>SDK: login({extension, team, deviceType})
-    SDK-->>Store: Success/Error
-    Store-->>Hook: Login result
+        alt if Login
+    Hook->>App: Invoke onLogin callback
+    end
+    SDK-->>Store: AGENT_STATION_LOGIN_SUCCESS/Error
+    Store-->>Hook: Updated States 
+    Hook-->>Component: New state
     deactivate Store
-    Hook-->>Component: Updated state
     deactivate Hook
     Component->>Component: Show success/error
     deactivate Component
@@ -214,29 +215,28 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as StationLoginComponent
     participant Hook as useStationLogin Hook
     participant Store
     participant SDK
 
-    User->>Component: Click Logout button
+    App->>Component: Click Logout button
     activate Component
     Component->>Hook: logout()
     activate Hook
-    Hook->>SDK: stationLogout({ logoutReason })
+    Hook->>SDK: cc.stationLogout({ logoutReason })
     activate SDK
     SDK->>SDK: Process logout
-    SDK-->>Hook: AGENT_LOGOUT_SUCCESS event
+    SDK-->>Hook: AGENT_LOGOUT_SUCCESS/Error event
     deactivate SDK
-    Hook->>Hook: handleLogout()
-    Hook->>Hook: Invoke onLogout callback
-    Hook->>Store: Update state
+    alt if onLogout
+    Hook->>App: Invoke onLogout callback
+    end
     activate Store
-    Store->>Store: isAgentLoggedIn = false
-    Store-->>Hook: State updated
+    Store-->>Hook:  Updated states
     deactivate Store
-    Hook-->>Component: Updated state
+    Hook-->>Component: New state
     deactivate Hook
     Component->>Component: Re-render (logged out UI)
     deactivate Component
@@ -248,13 +248,13 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as StationLoginComponent
     participant Hook as useStationLogin Hook
     participant Store
     participant SDK
-
-    User->>Component: Modify device type
+    App->>Component: profileMode = true
+    App->>Component: Modify device type
     activate Component
     Component->>Hook: setCurrentLoginOptions({ deviceType })
     activate Hook
@@ -264,19 +264,22 @@ sequenceDiagram
     Component->>Component: Enable Save button
     deactivate Component
 
-    User->>Component: Click Save
+    App->>Component: Click Save
     activate Component
     Component->>Hook: saveLoginOptions()
     activate Hook
-    Hook->>Hook: Invoke onSaveStart()
-    Hook->>Hook: Build payload
-    Hook->>SDK: updateAgentProfile(payload)
+    alt
+    Hook->>App: Invoke onSaveStart()
+    end
+    Hook->>SDK: cc.updateAgentProfile(payload)
     activate SDK
     SDK->>SDK: Update agent profile
     SDK-->>Hook: Success response
     deactivate SDK
     Hook->>Hook: setOriginalLoginOptions = currentLoginOptions
-    Hook->>Hook: Invoke onSaveEnd(true)
+    alt
+    Hook->>App: Invoke onSaveEnd(true)
+    end
     Hook-->>Component: Save complete
     deactivate Hook
     Component->>Component: Show success message
@@ -290,13 +293,13 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as StationLoginComponent
     participant Hook as useStationLogin Hook
     participant Store
     participant SDK
 
-    User->>Component: Attempt login
+    App->>Component: Attempt login
     activate Component
     Component->>Hook: login()
     activate Hook
@@ -309,10 +312,10 @@ sequenceDiagram
     Store-->>Component: Re-render with alert
     deactivate Hook
     Component->>Component: Show alert dialog
-    Component-->>User: "Already logged in elsewhere"
+    Component-->>App: "Already logged in elsewhere"
     deactivate Component
 
-    User->>Component: Click Continue
+    App->>Component: Click Continue
     activate Component
     Component->>Hook: handleContinue()
     activate Hook
@@ -322,12 +325,15 @@ sequenceDiagram
     Store->>SDK: register()
     activate SDK
     SDK->>SDK: Force register
-    SDK-->>Store: Success
+    SDK-->>Store: AGENT_STATION_LOGIN_SUCCESS
     deactivate SDK
     Store->>Store: isAgentLoggedIn = true
     Store-->>Hook: Registration complete
     deactivate Store
     Hook-->>Component: Update state
+    alt
+    Hook-->App: onLoginCb
+    end
     deactivate Hook
     Component->>Component: Hide alert
     Component->>Component: Show logged in UI
@@ -340,38 +346,37 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
+    participant App
     participant Component as StationLoginComponent
     participant Hook as useStationLogin Hook
     participant Store
     participant SDK
     participant App as Application
 
-    User->>Component: Click Sign Out button
+    App->>Component: Click Sign Out button
     activate Component
     Component->>Hook: handleCCSignOut()
     activate Hook
 
-    alt doStationLogout = true AND isAgentLoggedIn = true
-        Hook->>SDK: stationLogout({ logoutReason })
-        activate SDK
-        SDK-->>Hook: Logout success
-        deactivate SDK
-        Hook->>SDK: deregister()
-        activate SDK
-        SDK-->>Hook: Deregister success
-        deactivate SDK
-    end
+    Hook->>SDK: cc.stationLogout({ logoutReason })
+    activate SDK
+    SDK-->>Hook: AGENT_STATION_LOGOUT success
+    deactivate SDK
+    Hook->>SDK: cc.deregister()
+    activate SDK
+    SDK-->>Hook: Deregister success
+    deactivate SDK
 
     Hook->>Hook: Invoke onCCSignOut callback
+    alt
     Hook->>App: onCCSignOut()
+    end
     activate App
     App->>App: Handle full sign out
     App->>App: Clear session, redirect, etc.
     deactivate App
     Hook-->>Component: Sign out complete
     deactivate Hook
-    Component-->>User: Signed out
     deactivate Component
 ```
 

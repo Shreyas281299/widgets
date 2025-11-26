@@ -139,63 +139,7 @@ const AgentStatusPanel = observer(() => {
   );
 });
 ```
-
-#### 2. Supervisor Dashboard Integration
-
-```typescript
-// Track multiple agents' state changes
-import { UserState } from '@webex/cc-user-state';
-
-function SupervisorDashboard({ agentId }) {
-  const handleAgentStateChange = (state) => {
-    // Send state change to analytics
-    trackAgentState(agentId, state);
-    
-    // Update dashboard
-    updateAgentStatus(agentId, state.name);
-    
-    // Check if agent needs assistance
-    if (state.name === 'Idle' && state.duration > 900) {
-      notifySupervisor(`Agent ${agentId} idle for 15+ minutes`);
-    }
-  };
-
-  return <UserState onStateChange={handleAgentStateChange} />;
-}
-```
-
-#### 3. State Change Validation
-
-```typescript
-// Validate state changes before allowing
-import { UserState } from '@webex/cc-user-state';
-import store from '@webex/cc-store';
-
-function ValidatedUserState() {
-  const handleStateChange = (newState) => {
-    // Check if agent has pending tasks
-    if (newState.name === 'Idle' && store.hasActiveTasks) {
-      showWarning('Please complete active tasks before going idle');
-      // State change will be rejected by store
-      return;
-    }
-    
-    // Log state change
-    auditLog('State change', {
-      agent: store.agentId,
-      from: store.currentState,
-      to: newState.name,
-      timestamp: Date.now()
-    });
-    
-    console.log('State change approved:', newState);
-  };
-
-  return <UserState onStateChange={handleStateChange} />;
-}
-```
-
-#### 4. Custom Error Handling
+#### 2. Custom Error Handling
 
 ```typescript
 import store from '@webex/cc-store';
@@ -216,42 +160,6 @@ store.onErrorCallback = (componentName, error) => {
 ```
 
 ### Integration Patterns
-
-#### With Agent Desktop
-
-```typescript
-import { UserState } from '@webex/cc-user-state';
-import { observer } from 'mobx-react-lite';
-import store from '@webex/cc-store';
-
-const AgentDesktop = observer(() => {
-  const { isAgentLoggedIn, currentState } = store;
-
-  const handleStateChange = (newState) => {
-    // Update local UI
-    updateHeaderStatus(newState.name);
-    
-    // Log to analytics
-    logStateChange(newState);
-  };
-
-  if (!isAgentLoggedIn) {
-    return <LoginScreen />;
-  }
-
-  return (
-    <div className="desktop">
-      <header>
-        <UserState onStateChange={handleStateChange} />
-      </header>
-      <main>
-        <TaskPanel />
-        <CustomerInfo />
-      </main>
-    </div>
-  );
-});
-```
 
 #### With Idle Code Management
 
