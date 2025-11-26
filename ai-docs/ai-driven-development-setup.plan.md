@@ -193,15 +193,15 @@ As the documentation is created, developers will reinforce or gain:
 
 | Phase | Component | Task Description | File to Create | Learning Focus | Status |
 |-------|-----------|------------------|----------------|----------------|--------|
-| 0.15 | cc-components | Create agent.md | `packages/.../cc-components/ai-prompts/agent.md` | Component library overview, usage | ⏳ Planned |
-| 0.16 | cc-components | Create architecture.md | `packages/.../cc-components/ai-prompts/architecture.md` | React component patterns, structure | ⏳ Planned |
-| 0.17 | cc-widgets | Create agent.md | `packages/.../cc-widgets/ai-prompts/agent.md` | Widget exports, aggregation overview | ⏳ Planned |
-| 0.18 | cc-widgets | Create architecture.md | `packages/.../cc-widgets/ai-prompts/architecture.md` | Web Component aggregation patterns | ⏳ Planned |
-| 0.19 | ui-logging | Create agent.md | `packages/.../ui-logging/ai-prompts/agent.md` | Logging utilities overview, usage | ⏳ Planned |
-| 0.20 | ui-logging | Create architecture.md | `packages/.../ui-logging/ai-prompts/architecture.md` | Metrics/logging patterns, flows | ⏳ Planned |
-| 0.21 | test-fixtures | Create agent.md | `packages/.../test-fixtures/ai-prompts/agent.md` | Test fixtures overview, usage | ⏳ Planned |
-| 0.22 | test-fixtures | Create architecture.md | `packages/.../test-fixtures/ai-prompts/architecture.md` | Fixture patterns, structure | ⏳ Planned |
-| 0.23 | Templates | Create widget template | `WIDGET_TEMPLATE/` + configs | Template scaffolding | ⏳ Planned |
+| 0.15 | cc-components | Create agent.md | `packages/.../cc-components/ai-prompts/agent.md` | Component library overview, usage | ✅ Done |
+| 0.16 | cc-components | Create architecture.md | `packages/.../cc-components/ai-prompts/architecture.md` | React component patterns, structure | ✅ Done |
+| 0.17 | cc-widgets | Create agent.md | `packages/.../cc-widgets/ai-prompts/agent.md` | Widget exports, aggregation overview | ✅ Done |
+| 0.18 | cc-widgets | Create architecture.md | `packages/.../cc-widgets/ai-prompts/architecture.md` | Web Component aggregation patterns | ✅ Done |
+| 0.19 | ui-logging | Create agent.md | `packages/.../ui-logging/ai-prompts/agent.md` | Logging utilities overview, usage | ✅ Done |
+| 0.20 | ui-logging | Create architecture.md | `packages/.../ui-logging/ai-prompts/architecture.md` | Metrics/logging patterns, flows | ✅ Done |
+| 0.21 | test-fixtures | Create agent.md | `packages/.../test-fixtures/ai-prompts/agent.md` | Test fixtures overview, usage | ✅ Done |
+| 0.22 | test-fixtures | Create architecture.md | `packages/.../test-fixtures/ai-prompts/architecture.md` | Fixture patterns, structure | ✅ Done |
+| 0.23 | Templates | Create modular templates | `ai-docs/templates/` (modular structure) | Token-optimized templates | ✅ Done |
 
 ### Phase 0.24-0.27: IDE Integration (⏳ PLANNED)
 
@@ -244,6 +244,92 @@ As the documentation is created, developers will reinforce or gain:
 
 ---
 
+## AI Templates
+
+**Location:** `ai-docs/templates/`
+
+Modular templates for generating and maintaining widgets, components, and documentation.
+
+### Template Structure
+
+```
+ai-docs/templates/
+├── README.md                                    # Overview & usage guide ✅
+├── new-widget/                                  # New widget generation modules ✅
+│   ├── 00-master.md                            # Orchestrator (~350 lines) ✅
+│   ├── 01-pre-questions.md                     # Requirements (~400 lines) ✅
+│   ├── 02-code-generation.md                   # Code patterns (~550 lines) ✅
+│   ├── 03-component-generation.md              # Components (~450 lines) ✅
+│   ├── 04-integration.md                       # Integration (~500 lines) ✅
+│   ├── 05-test-generation.md                   # Tests (~500 lines) ✅
+│   └── 06-validation.md                        # Validation (~450 lines) ✅
+├── existing-widget/                             # Widget maintenance modules
+│   ├── bug-fix.md                              # Bug fix workflow (~400 lines) ✅
+│   ├── feature-enhancement.md                  # Add features (~500 lines) ✅
+│   ├── refactoring.md                          # Refactoring (planned)
+│   ├── performance-optimization.md             # Performance (planned)
+│   └── accessibility-improvement.md            # A11y (planned)
+├── documentation/                               # Reusable doc templates
+│   ├── create-agent-md.md                      # Generate agent.md (~400 lines) ✅
+│   ├── create-architecture-md.md               # Generate architecture.md (~500 lines) ✅
+│   ├── update-documentation.md                 # Update docs (planned)
+│   └── add-examples.md                         # Add examples (planned)
+├── testing/                                     # Test generation modules (planned)
+│   ├── add-unit-tests.md
+│   ├── add-e2e-tests.md
+│   ├── fix-failing-tests.md
+│   └── improve-coverage.md
+└── checklists/                                  # Validation checklists (planned)
+    ├── code-quality.md
+    ├── integration.md
+    ├── documentation.md
+    └── testing.md
+```
+
+### Available Templates
+
+**New Widget Generation (7 modules):**
+1. 00-master.md - Orchestrator & workflow
+2. 01-pre-questions.md - Requirements gathering
+3. 02-code-generation.md - Widget code patterns
+4. 03-component-generation.md - Presentational components (conditional)
+5. 04-integration.md - cc-widgets + samples integration
+6. 05-test-generation.md - Unit & E2E tests
+7. 06-validation.md - Quality checklist
+
+**Documentation (2 modules, reusable for all packages):**
+1. create-agent-md.md - Generate agent.md
+2. create-architecture-md.md - Generate architecture.md
+
+**Existing Widget Maintenance (2 modules):**
+1. bug-fix.md - Bug fix workflow
+2. feature-enhancement.md - Feature addition workflow
+
+### Planned Templates
+
+**Testing Modules:**
+- add-unit-tests.md - Unit test generation
+- add-e2e-tests.md - E2E test generation
+- fix-failing-tests.md - Debug test failures
+- improve-coverage.md - Coverage improvement
+
+**Maintenance Modules:**
+- refactoring.md - Code refactoring guide
+- performance-optimization.md - Performance improvements
+- accessibility-improvement.md - A11y enhancements
+
+**Documentation Modules:**
+- update-documentation.md - Update existing docs
+- add-examples.md - Add usage examples
+
+**Validation Modules:**
+- code-quality.md - Code quality checklist
+- integration.md - Integration checklist
+- documentation.md - Doc completeness checklist
+- testing.md - Test coverage checklist
+
+---
+
 ## Key Design Decisions
 
 ### Distributed Documentation
@@ -271,6 +357,11 @@ As the documentation is created, developers will reinforce or gain:
 - **Rationale:** Reduce AI hallucinations on file names and imports
 - **Location:** `docs/patterns/typescript-patterns.md`
 
+### Modular Templates
+- **Decision:** Use modular templates instead of monolithic templates
+- **Rationale:** LLMs read only required modules, documentation templates are reusable across all packages
+- **Location:** `ai-docs/templates/`
+
 ---
 
 ## Success Criteria
@@ -280,7 +371,12 @@ As the documentation is created, developers will reinforce or gain:
 - ✅ Master navigation created (agents.md + docs/README.md)
 - ✅ Architecture diagrams created
 - ✅ Component ai-prompts/ documentation (station-login, user-state) - Using Mermaid diagrams
-- 🔄 Store documentation (agent.md, architecture.md)
+- ✅ Store documentation (agent.md, architecture.md) - Reviewed and aligned with guidelines
+- ✅ Supporting packages documentation (cc-components, cc-widgets, ui-logging, test-fixtures)
+- ✅ Modular templates (12 complete templates)
+  - New widget generation: 7 modules
+  - Documentation: 2 reusable modules
+  - Existing widget maintenance: 2 modules
 - ⏳ IDE integration files (.cursorrules, .windsurfrules)
 - ⏳ Validation with actual AI coding tasks
 
@@ -299,8 +395,15 @@ As the documentation is created, developers will reinforce or gain:
 - Directory restructure (docs/patterns/, ai-prompts/ folders)
 - Naming and import conventions added
 - Technology-based versioning implemented
+- Widget documentation (station-login, user-state) - with Mermaid diagrams
+- Store documentation (agent.md, architecture.md) - Reviewed and optimized
+- Supporting package documentation (cc-components, cc-widgets, ui-logging, test-fixtures)
+- Modular templates (12 templates):
+  - New Widget Generation: 7 modules
+  - Documentation: 2 reusable modules
+  - Existing Widget Maintenance: 2 modules
 
 
 ---
 
-_Last Updated: 2025-11-23_
+_Last Updated: 2025-11-26_
