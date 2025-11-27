@@ -205,7 +205,7 @@ class StoreWrapper implements IStoreWrapper {
   };
 
   setCurrentTask = (task: ITask | null, isClicked: boolean = false): void => {
-    // Don't assign the task as current task is incoming
+    // Don't assign the task as current task is incoming or not
     if (isIncomingTask(task, this.agentId)) return;
 
     runInAction(() => {
