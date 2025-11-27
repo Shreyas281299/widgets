@@ -83,6 +83,7 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v3
         with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Node
@@ -104,16 +105,9 @@ jobs:
           path: '**/dist'
           key: dist-${{ env.rid }}
 
-      - name: Test Tooling
-        run: yarn run test:coverage
-  sonarqube:
-    name: SonarQube
-    runs-on: macos-latest
-    needs: [install, build, test-coverage]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Test (CI, single root Jest)
+        run: yarn run test:ci
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:

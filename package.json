@@ -55,6 +55,7 @@
     "test:e2e": "yarn playwright test",
     "test:styles": "yarn workspaces foreach --all --exclude webex-widgets run test:styles",
     "test:coverage": "jest --coverage",
+    "test:ci": "jest --coverage --runInBand",
     "test:tooling": "jest --selectProjects tooling",
     "test:cc-widgets": "yarn workspaces foreach --all --exclude webex-widgets --exclude samples-cc-wc-app --exclude samples-cc-react-app run test:unit",
     "build:dev": "NODE_ENV=development yarn build",

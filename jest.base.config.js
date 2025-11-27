@@ -4,6 +4,7 @@ const baseConfig = {
   collectCoverage: true,
   coverageReporters: ['lcov'],
   coverageDirectory: '<rootDir>/coverage',
+  coverageProvider: 'v8',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^.+\\.(css|less|scss)$': 'babel-jest',
