@@ -1,20 +1,50 @@
-const path = require('path');
+const base = require('./jest.base.config.js');
+
+const makeProject = (overrides) => ({
+  ...base,
+  ...overrides,
+});
 
 module.exports = {
-  rootDir: '.',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapper: {
-    '^.+\\.(css|less|scss)$': 'babel-jest',
+  globalConfig: {
+    collectCoverage: true,
+    coverageReporters: ['lcov', 'html'],
   },
-  testEnvironment: 'jsdom',
-  testMatch: ['**/tooling/tests/**/*.js'],
-  transformIgnorePatterns: [
-    '/node_modules/(?!(@momentum-design/components|@momentum-ui/react-collaboration|@lit|lit|cheerio|react-error-boundary))',
+  projects: [
+    makeProject({
+      displayName: 'tooling',
+      rootDir: '.',
+      testMatch: ['<rootDir>/tooling/tests/**/*.js'],
+    }),
+    makeProject({
+      displayName: 'cc-components',
+      rootDir: '.',
+      testMatch: ['**/cc-components/tests/**/*.ts', '**/cc-components/tests/**/*.tsx'],
+    }),
+    makeProject({
+      displayName: 'station-login',
+      rootDir: '.',
+      testMatch: ['**/station-login/tests/**/*.ts', '**/station-login/tests/**/*.tsx'],
+    }),
+    makeProject({
+      displayName: 'store',
+      rootDir: '.',
+      testMatch: ['**/store/tests/**/*.ts', '**/store/tests/**/*.tsx'],
+    }),
+    makeProject({
+      displayName: 'task',
+      rootDir: '.',
+      testMatch: ['**/task/tests/**/*.ts', '**/task/tests/**/*.tsx'],
+    }),
+    makeProject({
+      displayName: 'user-state',
+      rootDir: '.',
+      testMatch: ['**/user-state/tests/**/*.ts', '**/user-state/tests/**/*.tsx'],
+    }),
+    makeProject({
+      displayName: 'ui-logging',
+      rootDir: '.',
+      testMatch: ['**/ui-logging/tests/**/*.ts', '**/ui-logging/tests/**/*.tsx'],
+    }),
   ],
-  // Use babel-jest or ts-jest depending on your setup
-  transform: {
-    '\\.[jt]sx?$': 'babel-jest',
-    '\\.[jt]s?$': 'babel-jest',
-  },
-  moduleDirectories: ['node_modules', 'src'],
 };
