@@ -163,7 +163,7 @@ sequenceDiagram
     C->>C: Show consult modal
     U->>C: Select agent
     C->>H: consultCall(agentId, 'AGENT', true)
-    H->>T: task.consultCall({targetAgentId, destinationType})
+    H->>T: task.consult({to, destinationType, holdParticipants})
     T->>B: POST /task/consult
     B-->>T: Consult call created
     T-->>S: Emit TASK_CONSULT
@@ -200,7 +200,7 @@ sequenceDiagram
     C->>C: Show conference modal
     U->>C: Select agent
     C->>H: consultCall(agentId, 'AGENT', true)
-    H->>T: task.consultCall({ targetAgentId, destinationType, allowParticipantsToInteract })
+    H->>T: task.consult({to, destinationType, holdParticipants})
     T->>B: POST /task/consult
     B-->>T: Consult created
 
@@ -301,7 +301,7 @@ sequenceDiagram
 | Resume     | `toggleHold(false)`   | `task.resume()`                                    | Resume from hold  |
 | Mute       | `toggleMute()`        | N/A (local)                                        | Mute microphone   |
 | Transfer   | `transferCall(...)`   | `task.transfer(...)`                               | Direct transfer   |
-| Consult    | `consultCall(...)`    | `task.consultCall(...)`                            | Initiate consult  |
+| Consult    | `consultCall(...)`    | `task.consult(...)`                                | Initiate consult  |
 | Conference | `consultConference()` | `task.consultConference()`                         | Add to conference |
 | End Call   | `endCall()`           | `task.end()`                                       | End the call      |
 | Wrapup     | `wrapupCall(...)`     | `task.wrapup(...)`                                 | Submit wrapup     |
@@ -322,6 +322,11 @@ sequenceDiagram
 - `showQueues` - Show queues/entry points
 - `showAddressBook` - Show address book entries
 
+**Digital consult constraints (chat + Facebook):**
+
+- Consult targets are agent-only (queues/entry points/dial number hidden)
+- During digital conference, only "Exit Conference" is available for both agents
+
 ## Error Handling
 
 | Error            | Source   | Handled By    | Action                     |
@@ -332,6 +337,8 @@ sequenceDiagram
 | Wrapup failed    | Task SDK | Hook catch    | Log error                  |
 | Recording failed | Task SDK | Hook catch    | Log error                  |
 | Component crash  | React    | ErrorBoundary | Call store.onErrorCallback |
+
+**Digital consult/conference failures:** failure events trigger UI reset to normal chat state, and all consult/conference events are logged via store event handlers.
 
 ## Troubleshooting
 

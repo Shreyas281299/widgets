@@ -76,7 +76,7 @@ describe('getControlsVisibility', () => {
       muteUnmute: {isVisible: false, isEnabled: true},
       muteUnmuteConsult: {isVisible: false, isEnabled: true},
       holdResume: {isVisible: false, isEnabled: true},
-      consult: {isVisible: false, isEnabled: true},
+      consult: {isVisible: true, isEnabled: true},
       transfer: {isVisible: false, isEnabled: true},
       conference: {isVisible: false, isEnabled: true},
       wrapup: {isVisible: false, isEnabled: true},
@@ -317,6 +317,27 @@ describe('getControlsVisibility', () => {
     };
 
     expect(getControlsVisibility(deviceType, featureFlags, task, 'agent1', true)).toEqual(expectedControls);
+  });
+
+  it('should enable consult/conference for facebook digital tasks', () => {
+    const deviceType = 'BROWSER';
+    const featureFlags = {
+      isEndCallEnabled: true,
+      isEndConsultEnabled: true,
+      webRtcEnabled: true,
+    };
+
+    const task = createMockTask({
+      interaction: createPartialInteraction({
+        ...mockTask.data.interaction,
+        mediaType: 'social',
+        mediaChannel: 'facebook',
+      }),
+    });
+
+    const result = getControlsVisibility(deviceType, featureFlags, task, 'agent1', true);
+    expect(result.consult.isVisible).toBe(true);
+    expect(result.conference.isVisible).toBe(true);
   });
 
   it('should show correct controls when station logis is BROWSER, all flags are enabled and media type is email', () => {

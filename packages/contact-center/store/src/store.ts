@@ -39,6 +39,8 @@ class Store implements IStore {
   isDeclineButtonEnabled = false;
   currentConsultQueueId: string = '';
   consultStartTimeStamp = undefined;
+  consultUiReset: boolean = false;
+  consultUiResetInteractionId: string = '';
   lastStateChangeTimestamp?: number;
   lastIdleCodeChangeTimestamp?: number;
   showMultipleLoginAlert: boolean = false;

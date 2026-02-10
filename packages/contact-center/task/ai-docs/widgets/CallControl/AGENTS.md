@@ -30,8 +30,8 @@ Provides unified **interaction control** functionality (hold, mute, transfer, co
 - Hold/Resume active **voice** task (telephony only)
 - Mute/Unmute microphone (telephony only)
 - Transfer task/call (to agent/queue/number; telephony only)
-- Consult with agent before transfer (telephony only)
-- Conference multiple parties (telephony only)
+- Consult with agent before transfer (telephony; also chat/Facebook)
+- Conference multiple parties (telephony; also chat/Facebook)
 - Recording controls (pause/resume; telephony only)
 - End task (call or digital interaction)
 - Wrapup with codes for completed tasks
@@ -75,17 +75,17 @@ function App() {
 
 ## Props API
 
-| Prop                          | Type                                                                        | Default | Description                                                      |
-| ----------------------------- | --------------------------------------------------------------------------- | ------- | ---------------------------------------------------------------- |
-| `onHoldResume`                | `({ isHeld, task }: { isHeld: boolean; task: ITask }) => void`              | -       | Callback when hold state changes                                 |
-| `onEnd`                       | `({ task }: { task: ITask }) => void`                                       | -       | Callback when call ends                                          |
-| `onWrapUp`                    | `({ task, wrapUpReason }: { task: ITask; wrapUpReason: string }) => void`   | -       | Callback when wrapup completes (includes wrapup reason and task) |
-| `onRecordingToggle`           | `({ isRecording, task }: { isRecording: boolean; task: ITask }) => void`    | -       | Callback when recording toggled                                  |
-| `onToggleMute`                | `({ isMuted, task }: { isMuted: boolean; task: ITask }) => void`            | -       | Callback when mute toggled                                       |
-| `conferenceEnabled`           | `boolean`                                                                   | `true`  | Enable conference functionality                                  |
-| `consultTransferOptions`      | `{ showAgents?: boolean, showQueues?: boolean, showAddressBook?: boolean }` | -       | Configure transfer options                                       |
-| `callControlClassName`        | `string`                                                                    | -       | Custom CSS class (CAD variant)                                   |
-| `callControlConsultClassName` | `string`                                                                    | -       | Custom CSS class for consult (CAD variant)                       |
+| Prop                          | Type                                                                        | Default | Description                                                           |
+| ----------------------------- | --------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| `onHoldResume`                | `({ isHeld, task }: { isHeld: boolean; task: ITask }) => void`              | -       | Callback when hold state changes                                      |
+| `onEnd`                       | `({ task }: { task: ITask }) => void`                                       | -       | Callback when call ends                                               |
+| `onWrapUp`                    | `({ task, wrapUpReason }: { task: ITask; wrapUpReason: string }) => void`   | -       | Callback when wrapup completes (includes wrapup reason and task)      |
+| `onRecordingToggle`           | `({ isRecording, task }: { isRecording: boolean; task: ITask }) => void`    | -       | Callback when recording toggled                                       |
+| `onToggleMute`                | `({ isMuted, task }: { isMuted: boolean; task: ITask }) => void`            | -       | Callback when mute toggled                                            |
+| `conferenceEnabled`           | `boolean`                                                                   | `true`  | Enable conference functionality                                       |
+| `consultTransferOptions`      | `{ showAgents?: boolean, showQueues?: boolean, showAddressBook?: boolean }` | -       | Configure transfer options; consult uses agent-only for chat/Facebook |
+| `callControlClassName`        | `string`                                                                    | -       | Custom CSS class (CAD variant)                                        |
+| `callControlConsultClassName` | `string`                                                                    | -       | Custom CSS class for consult (CAD variant)                            |
 
 ## Examples
 
@@ -111,6 +111,14 @@ function App() {
   }}
 />
 ```
+
+### Digital Consult/Conference (Chat + Facebook)
+
+- Consult and conference are enabled for chat and Facebook tasks using the same CallControl UI.
+- Consult targets are **agent-only** for digital tasks.
+- During digital conference:
+  - The initiating agent can only exit the conference.
+  - The consulted agent can only exit the conference.
 
 ### CAD Variant with Custom Styling
 

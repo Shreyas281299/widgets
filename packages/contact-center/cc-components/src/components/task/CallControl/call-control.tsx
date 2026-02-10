@@ -5,6 +5,7 @@ import './call-control.styles.scss';
 import {PopoverNext, TooltipNext, Text, ButtonCircle} from '@momentum-ui/react-collaboration';
 import {Icon, Button, Select, Option} from '@momentum-design/components/dist/react';
 import ConsultTransferPopoverComponent from './CallControlCustom/consult-transfer-popover';
+import CallControlConsultComponent from './CallControlCustom/call-control-consult';
 import AutoWrapupTimer from '../AutoWrapupTimer/AutoWrapupTimer';
 import type {MEDIA_CHANNEL as MediaChannelType} from '../task.types';
 import {DestinationType} from '@webex/cc-store';
@@ -50,10 +51,13 @@ function CallControlComponent(props: CallControlComponentProps) {
     transferCall,
     consultCall,
     exitConference,
+    switchToMainCall,
     switchToConsult,
     consultConference,
     consultTransfer,
+    endConsultCall,
     callControlAudio,
+    consultAgentName,
     setConsultAgentName,
     allowConsultToQueue,
     setLastTargetType,
@@ -61,6 +65,8 @@ function CallControlComponent(props: CallControlComponentProps) {
     logger,
     secondsUntilAutoWrapup,
     cancelAutoWrapup,
+    consultTimerLabel,
+    consultTimerTimestamp,
     getAddressBookEntries,
     getEntryPoints,
     getQueuesFetcher,
@@ -162,6 +168,8 @@ function CallControlComponent(props: CallControlComponentProps) {
               if (!button.isVisible) return null;
 
               if (button.menuType) {
+                const isConsultMenu = button.menuType === 'Consult';
+                const allowConsultToQueueForMenu = !isConsultMenu || isTelephony ? allowConsultToQueue : false;
                 return (
                   <PopoverNext
                     key={index}
@@ -239,7 +247,7 @@ function CallControlComponent(props: CallControlComponentProps) {
                         onDialNumberSelect={(dialNumber, allowParticipantsToInteract) =>
                           handleTargetSelect(dialNumber, dialNumber, 'dialNumber', allowParticipantsToInteract)
                         }
-                        allowConsultToQueue={allowConsultToQueue}
+                        allowConsultToQueue={allowConsultToQueueForMenu}
                         consultTransferOptions={
                           isTelephony
                             ? consultTransferOptions
@@ -361,6 +369,23 @@ function CallControlComponent(props: CallControlComponentProps) {
           </div>
         )}
       </div>
+      {controlVisibility.isConsultInitiatedOrAccepted && !controlVisibility.wrapup.isVisible && (
+        <div className="call-control-consult-container">
+          <CallControlConsultComponent
+            agentName={consultAgentName}
+            consultTimerLabel={consultTimerLabel}
+            consultTimerTimestamp={consultTimerTimestamp}
+            endConsultCall={endConsultCall}
+            consultTransfer={consultTransfer}
+            consultConference={consultConference}
+            switchToMainCall={switchToMainCall}
+            logger={logger}
+            isMuted={isMuted}
+            controlVisibility={controlVisibility}
+            toggleConsultMute={toggleMute}
+          />
+        </div>
+      )}
     </>
   );
 }

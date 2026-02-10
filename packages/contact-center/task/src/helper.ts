@@ -235,9 +235,25 @@ export const useIncomingTask = (props: UseTaskProps) => {
         method: 'accept',
       });
       if (!incomingTask?.data.interactionId) return;
-      incomingTask.accept().catch((error) => {
-        logError(`CC-Widgets: Error accepting incoming task: ${error}`, 'accept');
-      });
+      if (incomingTask?.data?.interaction?.state === 'consult') {
+        const consultTask = incomingTask as ITask & {consultAnswer?: () => Promise<void>};
+        // if (!consultTask.consultAnswer) {
+        //   logger.info('CC-Widgets: consultAnswer not available on task', {
+        //     module: 'useIncomingTask',
+        //     method: 'accept',
+        //     interactionId: incomingTask?.data?.interactionId,
+        //   });
+        //   return;
+        // }
+
+        consultTask.consultAnswer().catch((error) => {
+          logError(`CC-Widgets: Error answering consult task: ${error}`, 'accept');
+        });
+      } else {
+        incomingTask.accept().catch((error) => {
+          logError(`CC-Widgets: Error accepting incoming task: ${error}`, 'accept');
+        });
+      }
       logger.log(`CC-Widgets: incomingTask accepted`, {
         module: 'useIncomingTask',
         method: 'accept',
@@ -928,8 +944,27 @@ export const useCallControl = (props: useCallControlProps) => {
   };
 
   const controlVisibility = useMemo(
-    () => getControlsVisibility(deviceType, featureFlags, currentTask, agentId, conferenceEnabled, logger),
-    [deviceType, featureFlags, currentTask, agentId, conferenceEnabled, logger]
+    () =>
+      getControlsVisibility(
+        deviceType,
+        featureFlags,
+        currentTask,
+        agentId,
+        conferenceEnabled,
+        logger,
+        store.consultUiReset,
+        store.consultUiResetInteractionId
+      ),
+    [
+      deviceType,
+      featureFlags,
+      currentTask,
+      agentId,
+      conferenceEnabled,
+      logger,
+      store.consultUiReset,
+      store.consultUiResetInteractionId,
+    ]
   );
 
   // Add useEffect for auto wrap-up timer

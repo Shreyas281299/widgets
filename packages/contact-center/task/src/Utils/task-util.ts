@@ -9,6 +9,7 @@ import {
   getIsCustomerInCall,
   getConferenceParticipantsCount,
   findHoldStatus,
+  isSecondaryAgent,
 } from '@webex/cc-store';
 import {ITask, Interaction} from '@webex/contact-center';
 import {Visibility} from '@webex/cc-components';
@@ -16,6 +17,7 @@ import {
   MEDIA_TYPE_TELEPHONY,
   MEDIA_TYPE_CHAT,
   MEDIA_TYPE_EMAIL,
+  MEDIA_CHANNEL_FACEBOOK,
   MAX_PARTICIPANTS_IN_MULTIPARTY_CONFERENCE,
   DestinationAgentType,
 } from './constants';
@@ -223,11 +225,12 @@ export function getConferenceButtonVisibility(
   isBrowser: boolean,
   webRtcEnabled: boolean,
   isCall: boolean,
-  isChat: boolean,
+  isDigitalConferenceEligible: boolean,
   isBeingConsulted: boolean,
   conferenceEnabled: boolean
 ): Visibility {
-  const isVisible = ((isBrowser && isCall && webRtcEnabled) || isChat) && !isBeingConsulted && conferenceEnabled;
+  const isVisible =
+    ((isBrowser && isCall && webRtcEnabled) || isDigitalConferenceEligible) && !isBeingConsulted && conferenceEnabled;
 
   return {isVisible, isEnabled: true};
 }
@@ -277,6 +280,7 @@ export function getMergeConferenceButtonVisibility(
 export function getConsultButtonVisibility(
   isTelephonySupported: boolean,
   isCall: boolean,
+  isDigitalConferenceEligible: boolean,
   isConsultInProgress: boolean,
   isCustomerInCall: boolean,
   conferenceParticipantsCount: number,
@@ -286,7 +290,7 @@ export function getConsultButtonVisibility(
   isConsultCompleted: boolean,
   isConferenceInProgress: boolean
 ): Visibility {
-  const isVisible = isCall && isTelephonySupported && !isBeingConsulted;
+  const isVisible = ((isCall && isTelephonySupported) || isDigitalConferenceEligible) && !isBeingConsulted;
   const isEnabled =
     conferenceParticipantsCount < maxParticipantsInConference &&
     !isConsultInProgress &&
@@ -303,9 +307,13 @@ export function getEndConsultButtonVisibility(
   isEndConsultEnabled: boolean,
   isTelephonySupported: boolean,
   isCall: boolean,
-  isConsultInitiatedOrAccepted: boolean
+  isConsultInitiatedOrAccepted: boolean,
+  isBeingConsulted: boolean,
+  isDigitalConferenceEligible: boolean
 ): Visibility {
-  const isVisible = isEndConsultEnabled && isCall && isTelephonySupported && isConsultInitiatedOrAccepted;
+  const isVisible =
+    (isEndConsultEnabled && isCall && isTelephonySupported && isConsultInitiatedOrAccepted) ||
+    (isDigitalConferenceEligible && (isConsultInitiatedOrAccepted || isBeingConsulted));
 
   return {isVisible, isEnabled: true};
 }
@@ -431,15 +439,19 @@ export function getControlsVisibility(
   task: ITask,
   agentId: string,
   conferenceEnabled: boolean,
-  logger?: ILogger
+  logger?: ILogger,
+  consultUiReset?: boolean,
+  consultUiResetInteractionId?: string
 ) {
   try {
     // Extract media type and related flags
-    const {mediaType} = task?.data?.interaction || {};
+    const {mediaType, mediaChannel} = task?.data?.interaction || {};
     const isCall = mediaType === MEDIA_TYPE_TELEPHONY;
     const isChat = mediaType === MEDIA_TYPE_CHAT;
     const isEmail = mediaType === MEDIA_TYPE_EMAIL;
-    const isDigitalChannel = isChat || isEmail;
+    const isFacebook = mediaChannel === MEDIA_CHANNEL_FACEBOOK;
+    const isDigitalConferenceEligible = isChat || isFacebook;
+    const isDigitalChannel = isChat || isEmail || isFacebook;
 
     // Extract device type flags
     const {isBrowser, isAgentDN, isExtension} = getDeviceTypeFlags(deviceType);
@@ -453,13 +465,21 @@ export function getControlsVisibility(
 
     // Calculate task state flags
     const isTransferVisibility = isBrowser ? webRtcEnabled : true;
-    const isConferenceInProgress = (task?.data?.isConferenceInProgress && conferenceEnabled) ?? false;
-    const isConsultInProgress = getIsConsultInProgress(task);
+    const shouldIgnoreConsultState =
+      !!consultUiReset && consultUiResetInteractionId === task?.data?.interactionId && isDigitalConferenceEligible;
+    const isConferenceInProgress = shouldIgnoreConsultState
+      ? false
+      : ((task?.data?.isConferenceInProgress && conferenceEnabled) ?? false);
+    const isConsultInProgress = shouldIgnoreConsultState ? false : getIsConsultInProgress(task);
     const isHeld = findHoldStatus(task, 'mainCall', agentId);
     const isCustomerInCall = getIsCustomerInCall(task);
+    const isCustomerInCallForConsult = isDigitalConferenceEligible ? true : isCustomerInCall;
     // const mainCallHeld = findHoldStatus(task, 'mainCall', agentId);
     const consultCallHeld = findHoldStatus(task, 'consult', agentId);
-    const taskConsultStatus = getConsultStatus(task, agentId);
+    const taskConsultStatus = shouldIgnoreConsultState
+      ? ConsultStatus.NO_CONSULTATION_IN_PROGRESS
+      : getConsultStatus(task, agentId);
+    const isSecondaryConsultAgent = isSecondaryAgent(task);
 
     // Calculate conference participants count
     const conferenceParticipantsCount = getConferenceParticipantsCount(task);
@@ -520,7 +540,7 @@ export function getControlsVisibility(
         isBrowser,
         webRtcEnabled,
         isCall,
-        isChat,
+        isDigitalConferenceEligible,
         isBeingConsulted,
         conferenceEnabled
       ),
@@ -537,7 +557,7 @@ export function getControlsVisibility(
         isConsultAccepted,
         consultCallHeld,
         isConferenceInProgress,
-        isCustomerInCall,
+        isCustomerInCallForConsult,
         conferenceEnabled
       ),
 
@@ -545,8 +565,9 @@ export function getControlsVisibility(
       consult: getConsultButtonVisibility(
         telephonySupported,
         isCall,
+        isDigitalConferenceEligible,
         isConsultInProgress,
-        isCustomerInCall,
+        isCustomerInCallForConsult,
         conferenceParticipantsCount,
         MAX_PARTICIPANTS_IN_MULTIPARTY_CONFERENCE,
         isBeingConsulted,
@@ -558,26 +579,28 @@ export function getControlsVisibility(
         isEndConsultEnabled,
         telephonySupported,
         isCall,
-        isConsultInitiatedOrAccepted
+        isConsultInitiatedOrAccepted,
+        isBeingConsulted,
+        isDigitalConferenceEligible
       ),
       consultTransfer: getConsultTransferButtonVisibility(
         isConsultInitiatedOrAcceptedOnly,
         isConsultAccepted,
         consultCallHeld,
         isConferenceInProgress,
-        isCustomerInCall
+        isCustomerInCallForConsult
       ),
       consultTransferConsult: getConsultTransferConsultButtonVisibility(
         isConsultAccepted,
         isConsultInitiated,
         consultCallHeld,
-        isCustomerInCall
+        isCustomerInCallForConsult
       ),
       mergeConferenceConsult: getMergeConferenceConsultButtonVisibility(
         isConsultAccepted,
         isConsultInitiated,
         consultCallHeld,
-        isCustomerInCall,
+        isCustomerInCallForConsult,
         conferenceEnabled
       ),
       muteUnmuteConsult: getMuteUnmuteConsultButtonVisibility(
@@ -611,6 +634,60 @@ export function getControlsVisibility(
       isHeld,
       consultCallHeld,
     };
+
+    if (isDigitalConferenceEligible && isConferenceInProgress) {
+      const resetVisibility: Visibility = {isVisible: false, isEnabled: false};
+      return {
+        ...controls,
+        accept: resetVisibility,
+        decline: resetVisibility,
+        end: resetVisibility,
+        muteUnmute: resetVisibility,
+        holdResume: resetVisibility,
+        consult: resetVisibility,
+        transfer: resetVisibility,
+        conference: resetVisibility,
+        mergeConference: resetVisibility,
+        consultTransfer: resetVisibility,
+        consultTransferConsult: resetVisibility,
+        mergeConferenceConsult: resetVisibility,
+        pauseResumeRecording: resetVisibility,
+        recordingIndicator: resetVisibility,
+        muteUnmuteConsult: resetVisibility,
+        switchToMainCall: resetVisibility,
+        switchToConsult: resetVisibility,
+        endConsult: resetVisibility,
+        wrapup: resetVisibility,
+        exitConference: {isVisible: true, isEnabled: true},
+        isConferenceInProgress,
+      };
+    }
+
+    if (isDigitalConferenceEligible && isSecondaryConsultAgent) {
+      const resetVisibility: Visibility = {isVisible: false, isEnabled: false};
+      return {
+        ...controls,
+        accept: resetVisibility,
+        decline: resetVisibility,
+        end: resetVisibility,
+        muteUnmute: resetVisibility,
+        holdResume: resetVisibility,
+        consult: resetVisibility,
+        transfer: resetVisibility,
+        conference: resetVisibility,
+        mergeConference: resetVisibility,
+        consultTransfer: resetVisibility,
+        consultTransferConsult: resetVisibility,
+        mergeConferenceConsult: resetVisibility,
+        pauseResumeRecording: resetVisibility,
+        recordingIndicator: resetVisibility,
+        muteUnmuteConsult: resetVisibility,
+        switchToMainCall: resetVisibility,
+        switchToConsult: resetVisibility,
+        wrapup: resetVisibility,
+        endConsult: {isVisible: true, isEnabled: true},
+      };
+    }
 
     return controls;
   } catch (error) {

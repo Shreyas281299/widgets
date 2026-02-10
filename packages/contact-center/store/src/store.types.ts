@@ -120,6 +120,8 @@ interface IStore {
   isDeclineButtonEnabled: boolean;
   currentConsultQueueId: string;
   consultStartTimeStamp?: number;
+  consultUiReset: boolean;
+  consultUiResetInteractionId: string;
   callControlAudio: MediaStream | null;
   isEndConsultEnabled: boolean;
   allowConsultToQueue: boolean;
@@ -152,6 +154,7 @@ interface IStoreWrapper extends IStore {
   setWrapupCodes(wrapupCodes: IWrapupCode[]): void;
   setState(state: IdleCode | ICustomState): void;
   setConsultStartTimeStamp(timestamp: number): void;
+  setConsultUiReset(value: boolean, interactionId?: string): void;
   setAgentProfile(profile: Profile): void;
   setTeamId(id: string): void;
   setIsMuted(value: boolean): void;
@@ -190,6 +193,18 @@ enum TASK_EVENTS {
   AGENT_WRAPPEDUP = 'AgentWrappedUp',
   AGENT_OFFER_CONTACT = 'AgentOfferContact',
   AGENT_CONSULT_CREATED = 'AgentConsultCreated',
+  AGENT_OFFER_CONSULT = 'AgentOfferConsult',
+  AGENT_CONSULTING = 'AgentConsulting',
+  AGENT_CONSULT_FAILED = 'AgentConsultFailed',
+  AGENT_CTQ_FAILED = 'AgentCtqFailed',
+  AGENT_CTQ_CANCELLED = 'AgentCtqCancelled',
+  AGENT_CTQ_CANCEL_FAILED = 'AgentCtqCancelFailed',
+  AGENT_CONSULT_ENDED = 'AgentConsultEnded',
+  AGENT_CONSULT_END_FAILED = 'AgentConsultEndFailed',
+  AGENT_CONSULT_CONFERENCE_ENDED = 'AgentConsultConferenceEnded',
+  AGENT_CONSULT_CONFERENCING = 'AgentConsultConferencing',
+  AGENT_CONSULT_CONFERENCED = 'AgentConsultConferenced',
+  AGENT_CONSULT_CONFERENCE_FAILED = 'AgentConsultConferenceFailed',
   TASK_RECORDING_PAUSED = 'task:recordingPaused',
   TASK_RECORDING_RESUMED = 'task:recordingResumed',
   TASK_OFFER_CONSULT = 'task:offerConsult',
@@ -271,6 +286,8 @@ const DESKTOP: string = 'BROWSER';
 // Common string constants used across the store wrapper
 const MEDIA_TYPE_TELEPHONY_LOWER = 'telephony';
 const MEDIA_TYPE_TELEPHONY_UPPER = 'TELEPHONY';
+const MEDIA_TYPE_CHAT_LOWER = 'chat';
+const MEDIA_CHANNEL_FACEBOOK = 'facebook';
 const DEVICE_TYPE_BROWSER = 'BROWSER';
 const AGENT_STATE_AVAILABLE = 'Available';
 
@@ -331,6 +348,8 @@ export {
   DESKTOP,
   MEDIA_TYPE_TELEPHONY_LOWER,
   MEDIA_TYPE_TELEPHONY_UPPER,
+  MEDIA_TYPE_CHAT_LOWER,
+  MEDIA_CHANNEL_FACEBOOK,
   DEVICE_TYPE_BROWSER,
   AGENT_STATE_AVAILABLE,
   LoginOptions,
