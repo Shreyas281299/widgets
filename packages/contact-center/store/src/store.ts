@@ -17,7 +17,7 @@ import {
 } from './store.types';
 
 import {getFeatureFlags} from './util';
-
+// test
 class Store implements IStore {
   private static instance: Store;
   teams: Team[] = [];
